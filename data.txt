@@ -1,0 +1,28 @@
+mesh
+Meshes/square.mesh
+
+t0
+0
+tfinal
+1.0
+dt
+0.02
+
+scheme
+RungeKutta
+# ExplicitEuler = Explicit Euler, RungeKutta = Runge Kutta 4
+
+velocity
+uniform 0.8 0.5
+#uniform c d, rotational c d, sinusoidal e f
+
+initial_condition
+rectangular -2.0 -1.0 7.0
+# gaussian x0 y0 a, rectangular x0 y0 b
+
+numerical_flux
+upwind
+# centered or upwind
+
+results
+Results/Square/Upwind/RK/Gaussian/
