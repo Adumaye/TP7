@@ -9,23 +9,23 @@ using namespace std;
 
 Vertex::Vertex()
 {
-  _v_coor[0] = -10000; _v_coor[1] = -10000; _ref = -1;
+  _v_coor(0) = -10000; _v_coor(1) = -10000; _ref = -1;
 }
 
 Vertex::Vertex(double x, double y, int ref) : _ref(ref)
 {
-  _v_coor[0] = x; _v_coor[1] = y;
+  _v_coor(0) = x; _v_coor(1) = y;
 }
 
 void Vertex::Print() const
 {
-  cout << "[x, y] = [" << _v_coor[0] << " " << _v_coor[1] << "];" << endl;
+  cout << "[x, y] = [" << _v_coor(0) << " " << _v_coor(1) << "];" << endl;
   cout << "ref = " << _ref << endl;
 }
 
 Edge::Edge()
 {
-  _v_edge[0] = -1; _v_edge[1] = -1; _ref = -1;
+  _v_edge(0) = -1; _v_edge(1) = -1; _ref = -1;
 }
 
 Edge::Edge(int vertex1, int vertex2, int ref) : _ref(ref)
@@ -33,13 +33,13 @@ Edge::Edge(int vertex1, int vertex2, int ref) : _ref(ref)
   // sort
   if (vertex1 > vertex2)
   {
-    _v_edge[0] = vertex2;
-    _v_edge[1] = vertex1;
+    _v_edge(0) = vertex2;
+    _v_edge(1) = vertex1;
   }
   else
   {
-    _v_edge[0] = vertex1;
-    _v_edge[1] = vertex2;
+    _v_edge(0) = vertex1;
+    _v_edge(1) = vertex2;
   }
   _t1 = -1;
   _t2 = -1;
@@ -47,24 +47,24 @@ Edge::Edge(int vertex1, int vertex2, int ref) : _ref(ref)
 
 void Edge::Print() const
 {
-  cout << "[pt1, pt2] = [" << _v_edge[0] << " " << _v_edge[1] << "];" << endl;
+  cout << "[pt1, pt2] = [" << _v_edge(0) << " " << _v_edge(1) << "];" << endl;
   cout << "[t1, t2] = [" << _t1 << " " << _t2 << "];" << endl;
   cout << "ref = " << _ref << endl;
 }
 
 Triangle::Triangle()
 {
-  _v_triangle[0] = -1; _v_triangle[1] = -1; _v_triangle[2] = -1; _ref = -1;
+  _v_triangle(0) = -1; _v_triangle(1) = -1; _v_triangle(2) = -1; _ref = -1;
 }
 
 Triangle::Triangle(int vertex1, int vertex2, int vertex3, int ref) : _ref(ref)
 {
-  _v_triangle[0] = vertex1; _v_triangle[1] = vertex2; _v_triangle[2] = vertex3;
+  _v_triangle(0) = vertex1; _v_triangle(1) = vertex2; _v_triangle(2) = vertex3;
 }
 
 void Triangle::Print() const
 {
-  cout << "[pt1, pt2, pt3] = [" << _v_triangle[0] << " " << _v_triangle[1] << " " << _v_triangle[2] << "];" << endl;
+  cout << "[pt1, pt2, pt3] = [" << _v_triangle(0) << " " << _v_triangle(1) << " " << _v_triangle(2) << "];" << endl;
   cout << "ref = " << _ref << endl;
 }
 
@@ -75,33 +75,24 @@ Mesh2D::Mesh2D()
 void Mesh2D::BuildTrianglesCenterAndArea()
 {
   _tri_center.resize(_triangles.size(),2);
-  for (int i=0; i<_triangles.size();i++)
-  {
-    Eigen::Vector2d x, y;
-    for (int j=0; j<3,j++)
-    {
-      int pj = _triangles[i].GetVertices()(j);
-      double x[j] = _vertices[pj].GetCoor()(0);
-      double y[j] = _vertices[pj].GetCoor()(1);
-    }
-    _tri_center(i,0)=(x[0]+x[1]+x[2])/3;
-    _tri_center(i,1)=(y[0]+y[1]+y[2])/3;
-  }
-  // Construire la matrice contenant les coordonnées des centres de chaque triangle
-  // _tri_center(i,0) correspond à la cooordonnée x du centre du triangle i
-  // _tri_center(i,1) correspond à la cooordonnée y du centre du triangle i
-
   _tri_area.resize(_triangles.size());
+
+  Eigen::VectorXd y;
+  Eigen::VectorXd x;
+  x.resize(3);y.resize(3);
+
   for (int i=0; i<_triangles.size();i++)
   {
-    Eigen::Vector2d x, y;
-    for (int j=0; j<3,j++)
+    for (int j=0; j<3; j++)
     {
       int pj = _triangles[i].GetVertices()(j);
-      double x[j] = _vertices[pj].GetCoor()(0);
-      double y[j] = _vertices[pj].GetCoor()(1);
+       x(j) = _vertices[pj].GetCoor()(0);
+       y(j) = _vertices[pj].GetCoor()(1);
     }
-    _tri_area(i)=fabs ((x[1]-x[0])(y[2]-y[0])-(y[1]-y[0])(y[2]-y[0]))/2.
+    _tri_center(i,0)=(x(0)+x(1)+x(2))/3;
+    _tri_center(i,1)=(y(0)+y(1)+y(2))/3;
+
+    _tri_area(i)= abs( (x(1)-x(0))*(y(2)-y(0))-(y(1)-y(0))*(x(2)-x(0)) ) / 2.;
   }
   //  Construire le vecteur contenant les aires de chaque triangle
   // _tri_area(i) correspond à l'aire du triangle i
@@ -110,28 +101,35 @@ void Mesh2D::BuildTrianglesCenterAndArea()
 void Mesh2D::BuildEdgesNormalLengthAndCenter()
 {
   _edg_center.resize(_edges.size(),2);
+  _edg_length.resize(_edges.size());
+  _edg_normal.resize(_edges.size(),2);
+
+  Eigen::Vector2d x;
+  Eigen::Vector2d y;
   for (int i=0; i<_edges.size();i++)
   {
-    Eigen::Vector2d x, y;
-    for (int j=0; j<2,j++)
+    for (int j=0; j<2; j++)
     {
       int pj = _edges[i].GetVertices()(j);
       x[j] = _vertices[pj].GetCoor()(0);
       y[j] = _vertices[pj].GetCoor()(1);
     }
-    _edg_center(i,0)=(x[0]+x[1])/2.;
-    _edg_center(i,1)=(y[0]+y[1])/2.;
+    _edg_center(i,0)=(x(0)+x(1))/2.;
+    _edg_center(i,1)=(y(0)+y(1))/2.;
+
+    _edg_length(i)=sqrt(pow(x(1)-x(0),2)+pow(y(1)-y(0),2));
+
+    _edg_normal(i,0)= (y(0)-y(1))/_edg_length(i);
+    _edg_normal(i,1)= (x(1)-x(0))/_edg_length(i);
+
+    int t1 = _edges[i].GetT1();
+
+    Eigen::Vector2d diff = _edg_center.row(i) - _tri_center.row(t1);
+
+    if (diff(0)*_edg_normal(i,0)+diff(1)*_edg_normal(i,1) < 0)
+      _edg_normal.row(i) *= -1;
   }
-  //  Construire le vecteur contenant les coordonnées des centres de chaque arête
-  // _edg_center(i,0) correspond à la cooordonnée x du centre de l'arête i
-  // _edg_center(i,1) correspond à la cooordonnée y du centre de l'arête i
-
-  _edg_length.resize(_edges.size());
-  // TODO : Construire le vecteur contenant les longueurs des arêtes
-  // _edg_length(i) correspond à la longueur de l'arête i
-
-  _edg_normal.resize(_edges.size(),2);
-  // TODO : Construire la matrice contenant les coordonnées des normales unitaires de chaque arête
+  // Construire la matrice contenant les coordonnées des normales unitaires de chaque arête
   // _edg_normal(i,0) correspond à la cooordonnée x de la normale unitaires de l'arête i
   // _edg_normal(i,1) correspond à la cooordonnée y de la normale unitaires de l'arête i
 }

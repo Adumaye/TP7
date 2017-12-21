@@ -49,7 +49,7 @@ double Function::ExactSolution(const double x, const double y, const double t) c
     std::cout << "The exact solution is not known !" << std::endl;
     abort();
   }
-  return InitialCondition(x-2.*t,y+2.*t);
+  return InitialCondition(x-_c*t,y-_d*t);
 }
 
 double Function::InitialCondition(const double x, const double y) const
@@ -57,11 +57,11 @@ double Function::InitialCondition(const double x, const double y) const
   switch (_initial_condition_choice)
   {
     case Gaussian:
-      return exp(-_a(pow((x-_x0),2)+pow((y-_y0),2)));
+      return exp( -_a*( pow((x-_x0),2) + pow((y-_y0),2) ) );
       break;
     case Rectangular:
     if (pow((x-_x0),2)+pow((y-_y0),2)<_b)
-      return pow((x-_x0),2)+pow((y-_y0),2);
+      return 1.;
     else
       return 0.;
       break;
@@ -99,7 +99,7 @@ double Function::Velocity_y(const double x, const double y, const double t) cons
       return _d*x;
       break;
     case Sinusoidal:
-      return _e*cos(_f*M_PI*t); 
+      return _e*cos(_f*M_PI*t);
       break;
     default:
       abort();
